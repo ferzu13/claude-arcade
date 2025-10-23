@@ -92,7 +92,7 @@ class SnakeGameWrapper {
   }
 
   generateFood() {
-    let newFood;
+    let newFood: { x: number; y: number };
     do {
       newFood = {
         x: Math.floor(Math.random() * this.WIDTH),

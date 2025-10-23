@@ -7,7 +7,8 @@
     "build": "tsc",
     "start": "ts-node src/index.ts",
     "claude": "ts-node src/claude-with-game.ts",
-    "snake": "ts-node src/snake-game.ts"
+    "snake": "ts-node src/snake-game.ts",
+    "space-invaders": "ts-node src/space-invaders.ts"
   },
   "keywords": [],
   "author": "",

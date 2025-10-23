@@ -6,6 +6,7 @@ class ClaudeCodeWrapper {
   private inGameMode = false;
   private ptyProcess: any = null;
   private gameLoop: NodeJS.Timeout | null = null;
+  private outputBuffer: string[] = [];
   
   // Game state
   private ball = { x: 25, y: 10, vx: 1, vy: 1 };
@@ -29,20 +30,45 @@ class ClaudeCodeWrapper {
       env: process.env as any
     });
 
-    // Forward Claude's output to our terminal
+    // Forward Claude's output - buffer during game mode
+    let totalBytesReceived = 0;
+    let bufferedBytes = 0;
+    
     this.ptyProcess.onData((data: string) => {
-      if (!this.inGameMode) {
+      totalBytesReceived += data.length;
+      
+      if (this.inGameMode) {
+        // Buffer output during game
+        this.outputBuffer.push(data);
+        bufferedBytes += data.length;
+        
+        // Warn if buffer gets large
+        if (bufferedBytes > 50000) { // 50KB threshold
+          console.error(`[PTY MONITOR] Buffer large: ${bufferedBytes} bytes buffered`);
+        }
+      } else {
+        // Direct output when not in game
         process.stdout.write(data);
       }
-      // If in game mode, ignore Claude output (it writes to hidden main screen)
     });
 
     // Handle Claude exit
-    this.ptyProcess.onExit(() => {
+    this.ptyProcess.onExit(({ exitCode, signal }: any) => {
       if (this.inGameMode) {
         process.stdout.write('\x1b[?1049l'); // Exit alternate screen
       }
-      process.exit(0);
+      
+      // Log unexpected exits
+      if (signal) {
+        console.error(`[PTY MONITOR] Claude killed by signal: ${signal}`);
+      }
+      
+      process.exit(exitCode || 0);
+    });
+    
+    // Monitor for PTY errors
+    this.ptyProcess.on('error', (err: Error) => {
+      console.error('[PTY ERROR]', err);
     });
 
     // Handle terminal resize
@@ -86,7 +112,7 @@ class ClaudeCodeWrapper {
       
       this.inGameMode = true;
       this.showWelcome();
-      // Claude continues running, output goes directly to main screen (hidden under game)
+      // Claude continues running, output buffered in memory
     } else {
       // ===== EXITING GAME MODE =====
       this.stopGame();
@@ -95,7 +121,21 @@ class ClaudeCodeWrapper {
       process.stdout.write('\x1b[?1049l'); // Switch back to main screen
       
       this.inGameMode = false;
-      // Claude's output (if any was generated) is now visible on main screen!
+      
+      // Flush all buffered output
+      if (this.outputBuffer.length > 0) {
+        for (const data of this.outputBuffer) {
+          process.stdout.write(data);
+        }
+        this.outputBuffer = []; // Clear buffer
+      }
+      
+      // Send Ctrl+L to refresh Claude's display
+      setTimeout(() => {
+        if (this.ptyProcess) {
+          this.ptyProcess.write('\x0C'); // Ctrl+L refresh
+        }
+      }, 100);
     }
   }
 
