@@ -1,8 +1,23 @@
 #!/usr/bin/env node
 
-import terminalKit from "terminal-kit";
+import * as readline from 'readline';
 
-const term = terminalKit.terminal;
+// ANSI escape codes
+const CLEAR = '\x1b[2J';
+const HIDE_CURSOR = '\x1b[?25l';
+const SHOW_CURSOR = '\x1b[?25h';
+const RESET = '\x1b[0m';
+const YELLOW = '\x1b[33m';
+const CYAN = '\x1b[36m';
+const RED = '\x1b[31m';
+const GREEN = '\x1b[32m';
+const MAGENTA = '\x1b[35m';
+const ALT_SCREEN = '\x1b[?1049h'; // Switch to alternate screen
+const MAIN_SCREEN = '\x1b[?1049l'; // Switch back to main screen
+
+function moveTo(x: number, y: number): string {
+  return `\x1b[${y};${x}H`;
+}
 
 // Game settings
 const WIDTH = 50;
@@ -17,23 +32,28 @@ let score = 0;
 let playing = false;
 let gameLoop: NodeJS.Timeout | null = null;
 
-// Initialize - use alternate screen buffer
-term.fullscreen(true); // This switches to alternate screen
-term.grabInput(true);
-term.hideCursor();
-term.clear();
+// Color map
+const colors: { [key: string]: string } = {
+  red: RED,
+  yellow: YELLOW,
+  green: GREEN,
+  magenta: MAGENTA,
+};
+
+// Initialize
+process.stdout.write(ALT_SCREEN + HIDE_CURSOR + CLEAR);
 
 // Create blocks
 function initBlocks() {
   blocks = [];
-  const colors = ['red', 'yellow', 'green', 'magenta'];
+  const colorNames = ['red', 'yellow', 'green', 'magenta'];
   for (let row = 0; row < 4; row++) {
     for (let col = 0; col < 10; col++) {
       blocks.push({
         x: col * 5,
         y: row + 2,
         active: true,
-        color: colors[row],
+        color: colorNames[row],
       });
     }
   }
@@ -57,12 +77,11 @@ function start() {
   playing = true;
   reset();
   if (gameLoop) clearInterval(gameLoop);
-  gameLoop = setInterval(update, 80);
+  gameLoop = setInterval(update, 100);
 }
 
 // Game loop
 function update() {
-  // Move ball
   ball.x += ball.vx;
   ball.y += ball.vy;
 
@@ -79,7 +98,7 @@ function update() {
   // Paddle hit
   const ballX = Math.round(ball.x);
   const ballY = Math.round(ball.y);
-  
+
   if (ballY >= HEIGHT - 2 && ballX >= paddle.x && ballX < paddle.x + PADDLE_WIDTH && ball.vy > 0) {
     ball.vy *= -1;
     const hitPos = (ball.x - paddle.x) / PADDLE_WIDTH;
@@ -111,37 +130,61 @@ function update() {
   draw();
 }
 
-// Draw game
+// Draw game - optimized
 function draw() {
-  term.moveTo(1, 1);
-  term.eraseLine();
-  term.yellow.bold(`Score: ${score}`);
+  let output = moveTo(1, 1) + YELLOW + `Score: ${score}` + RESET;
 
-  // Draw game area
+  const ballX = Math.round(ball.x);
+  const ballY = Math.round(ball.y);
+  const paddleY = HEIGHT - 2;
+
   for (let y = 0; y < HEIGHT; y++) {
-    term.moveTo(1, y + 3);
-    
+    output += moveTo(1, y + 3);
+    let line = '';
+
     for (let x = 0; x < WIDTH; x++) {
-      // Find what to draw
       const block = blocks.find(b => b.active && y === b.y && x >= b.x && x < b.x + 5);
-      const isBall = Math.round(ball.x) === x && Math.round(ball.y) === y;
-      const isPaddle = y === HEIGHT - 2 && x >= paddle.x && x < paddle.x + PADDLE_WIDTH;
+      const isBall = ballX === x && ballY === y;
+      const isPaddle = y === paddleY && x >= paddle.x && x < paddle.x + PADDLE_WIDTH;
 
       if (block) {
-        (term as any)[block.color]('█');
+        line += colors[block.color] + '█' + RESET;
       } else if (isBall) {
-        term.yellow('●');
+        line += YELLOW + '●' + RESET;
       } else if (isPaddle) {
-        term.cyan('═');
+        line += CYAN + '═' + RESET;
       } else {
-        term(' ');
+        line += ' ';
       }
+    }
+    output += line;
+  }
+
+  output += moveTo(1, HEIGHT + 4) + GREEN + 'Press P to play | ←→ to move | Q to quit' + RESET;
+  process.stdout.write(output);
+}
+
+// Fast paddle redraw - single write!
+function drawPaddleOnly() {
+  const paddleY = HEIGHT - 2;
+  const ballX = Math.round(ball.x);
+  const ballY = Math.round(ball.y);
+
+  let line = '';
+  for (let x = 0; x < WIDTH; x++) {
+    const isBall = ballX === x && ballY === paddleY;
+    const isPaddle = x >= paddle.x && x < paddle.x + PADDLE_WIDTH;
+
+    if (isBall) {
+      line += YELLOW + '●' + RESET;
+    } else if (isPaddle) {
+      line += CYAN + '═' + RESET;
+    } else {
+      line += ' ';
     }
   }
 
-  term.moveTo(1, HEIGHT + 4);
-  term.eraseLine();
-  term.green('Press P to play | ←→ to move | Q to quit');
+  process.stdout.write(moveTo(1, paddleY + 3) + line);
 }
 
 // End game
@@ -149,66 +192,68 @@ function endGame(won: boolean) {
   if (gameLoop) clearInterval(gameLoop);
   playing = false;
 
-  term.clear();
-  term.moveTo(1, 10);
-  
+  let output = CLEAR + moveTo(1, 10);
   if (won) {
-    term.green.bold('🎉 YOU WIN! 🎉\n\n');
+    output += GREEN + '🎉 YOU WIN! 🎉\n\n' + RESET;
   } else {
-    term.red.bold('💀 GAME OVER! 💀\n\n');
+    output += RED + '💀 GAME OVER! 💀\n\n' + RESET;
   }
+  output += YELLOW + `Final Score: ${score}\n\n` + RESET;
+  output += GREEN + 'Press P to play again\n' + RESET;
   
-  term.yellow(`Final Score: ${score}\n\n`);
-  term.green('Press P to play again\n');
+  process.stdout.write(output);
 }
 
 // Show welcome
 function showWelcome() {
-  term.clear();
-  term.moveTo(1, 10);
-  term.cyan.bold('BREAKOUT GAME\n\n');
-  term.green('Press P to start!\n');
+  const output = CLEAR + moveTo(1, 10) + CYAN + 'BREAKOUT GAME\n\n' + RESET + GREEN + 'Press P to start!\n' + RESET;
+  process.stdout.write(output);
 }
 
-// Cleanup - restore terminal
+// Cleanup
 function cleanup() {
   if (gameLoop) clearInterval(gameLoop);
-  term.grabInput(false);
-  term.hideCursor(false);
-  term.fullscreen(false); // Exit alternate screen - DON'T clear after this!
+  process.stdout.write(SHOW_CURSOR + MAIN_SCREEN);
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(false);
+  }
 }
 
-// Keyboard
-term.on('key', (name: string) => {
-  if (name === 'q' || name === 'CTRL_C') {
-    cleanup();
-    process.exit(0);
-  }
+// Keyboard input
+if (process.stdin.isTTY) {
+  process.stdin.setRawMode(true);
+  readline.emitKeypressEvents(process.stdin);
 
-  if (name === 'p' && !playing) {
-    start();
-  }
+  process.stdin.on('keypress', (_str: string, key: any) => {
+    if (!key) return;
 
-  if (playing) {
-    if (name === 'LEFT') {
-      paddle.x = Math.max(0, paddle.x - 3);
-    } else if (name === 'RIGHT') {
-      paddle.x = Math.min(WIDTH - PADDLE_WIDTH, paddle.x + 3);
+    if (key.name === 'q' || (key.ctrl && key.name === 'c')) {
+      cleanup();
+      process.exit(0);
     }
-  }
-});
 
-// Start
-showWelcome();
+    if (key.name === 'p' && !playing) {
+      start();
+    }
 
-// Keep alive
-setInterval(() => {}, 1000);
+    if (playing) {
+      if (key.name === 'left' || key.name === 'a') {
+        paddle.x = Math.max(0, paddle.x - 5);
+        drawPaddleOnly();
+      } else if (key.name === 'right' || key.name === 'd') {
+        paddle.x = Math.min(WIDTH - PADDLE_WIDTH, paddle.x + 5);
+        drawPaddleOnly();
+      }
+    }
+  });
+}
 
 process.on('SIGINT', () => {
   cleanup();
   process.exit(0);
 });
 
-process.on('exit', () => {
-  cleanup();
-});
+process.on('exit', cleanup);
+
+// Start
+showWelcome();

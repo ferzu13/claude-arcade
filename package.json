@@ -6,20 +6,18 @@
   "scripts": {
     "build": "tsc",
     "start": "ts-node src/index.ts",
-    "claude": "ts-node src/claude-with-game.ts"
+    "claude": "ts-node src/claude-with-game.ts",
+    "snake": "ts-node src/snake-game.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "ansi-escapes": "^7.1.1",
-    "node-pty": "^1.0.0",
-    "terminal-kit": "^3.0.0"
+    "node-pty": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^24.9.1",
-    "@types/terminal-kit": "^2.5.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
