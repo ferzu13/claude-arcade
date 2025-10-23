@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
+  "bin": {
+    "claude": "./dist/claude-with-game.js"
+  },
   "scripts": {
     "build": "tsc",
     "start": "ts-node src/index.ts",
