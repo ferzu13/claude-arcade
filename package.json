@@ -1,0 +1,28 @@
+{
+  "name": "terminal-pong-ts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "counter": "ts-node src/test-counter.ts",
+    "demo": "ts-node src/demo.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "ansi-escapes": "^7.1.1",
+    "terminal-kit": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.9.1",
+    "@types/terminal-kit": "^2.5.0",
+    "typescript": "^5.9.3",
+    "ts-node": "^10.9.2"
+  }
+}
