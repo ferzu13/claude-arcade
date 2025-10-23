@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "bin": {
-    "claude": "./dist/claude-with-game.js"
+    "claude-g": "./dist/claude-with-game.js"
   },
   "scripts": {
     "build": "tsc",
