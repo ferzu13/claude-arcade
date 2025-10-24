@@ -1,18 +1,21 @@
 {
   "name": "claude-arcade",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Add classic arcade games to your Claude Code workflow with Ctrl+G",
   "main": "dist/index.js",
   "bin": {
-    "claude-g": "./dist/claude-with-game.js"
+    "claude-arc": "./dist/claude-with-game.js"
   },
   "scripts": {
     "build": "tsc",
     "start": "NODE_OPTIONS='--no-deprecation' ts-node src/index.ts",
-    "claude": "NODE_OPTIONS='--no-deprecation' ts-node src/brick-breaker-game.ts",
-    "snake": "NODE_OPTIONS='--no-deprecation' ts-node src/snake-game.ts",
+    "dev:claude": "NODE_OPTIONS='--no-deprecation' ts-node src/brick-breaker-game.ts",
+    "dev:snake": "NODE_OPTIONS='--no-deprecation' ts-node src/snake-game.ts",
     "space-invaders": "NODE_OPTIONS='--no-deprecation' ts-node src/space-invaders.ts"
   },
+  "files": [
+    "dist"
+  ],
   "keywords": [
     "claude",
     "cli",

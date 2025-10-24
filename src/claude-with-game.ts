@@ -42,9 +42,9 @@ function showHelp() {
 ${CYAN}Claude Arcade${RESET} - Add games to your Claude Code workflow!
 
 ${GREEN}Usage:${RESET}
-  claude-g           Start Claude with Brick Breaker game
-  claude-g -snake    Start Claude with Snake game
-  claude-g -help     Show this help
+  claude-arc           Start Claude with Brick Breaker game
+  claude-arc -snake    Start Claude with Snake game
+  claude-arc -help     Show this help
 
 ${GREEN}Controls:${RESET}
   Ctrl+G    Toggle game overlay
@@ -55,10 +55,10 @@ ${GREEN}Games:${RESET}
   ${YELLOW}•${RESET} Snake         - Classic snake game
 
 ${GREEN}Examples:${RESET}
-  claude-g                    # Start with Brick Breaker
-  claude-g -snake             # Start with Snake
-  claude-g --snake            # Also works with double dash
-  claude-g -snake --model gpt # Pass args to Claude
+  claude-arc                    # Start with Brick Breaker
+  claude-arc -snake             # Start with Snake
+  claude-arc --snake            # Also works with double dash
+  claude-arc -snake --model gpt # Pass args to Claude
 
 ${GREEN}More info:${RESET}
   https://github.com/yourusername/claude-arcade
