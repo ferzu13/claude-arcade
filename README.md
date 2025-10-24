@@ -12,6 +12,22 @@ npm install -g claude-arcade
 
 That's it! Now you can use `claude-arc` to launch Claude Code with built-in games.
 
+### Configuration (Optional)
+
+To enable the **leaderboard feature**, you need to set up your own Supabase project:
+
+1. Create a free account at [supabase.com](https://supabase.com)
+2. Create a new project and set up a `leaderboard` table
+3. Copy `.env.example` to `.env` in the project root
+4. Add your Supabase credentials to `.env`:
+
+```bash
+SUPABASE_URL=your-project-url
+SUPABASE_ANON_KEY=your-anon-key
+```
+
+**Note:** The leaderboard feature is optional. Games will work without Supabase credentials, but you won't be able to submit scores.
+
 ## 🎯 Usage
 
 ```bash
@@ -75,6 +91,10 @@ cd claude-arcade
 # Install dependencies
 npm install
 
+# Set up environment variables (for leaderboard)
+cp .env.example .env
+# Edit .env with your Supabase credentials
+
 # Build
 npm run build
 
@@ -82,6 +102,15 @@ npm run build
 npm run dev:claude   # Brick Breaker
 npm run dev:snake    # Snake
 ```
+
+### Environment Variables
+
+The project uses the following environment variables (stored in `.env`):
+
+- `SUPABASE_URL` - Your Supabase project URL
+- `SUPABASE_ANON_KEY` - Your Supabase anon/public key (safe for client-side use)
+
+**Important:** Never commit your `.env` file to version control. It's already included in `.gitignore`.
 
 ## 📦 Uninstall
 

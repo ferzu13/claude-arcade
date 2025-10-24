@@ -1,12 +1,27 @@
 import { createClient } from '@supabase/supabase-js';
+import * as dotenv from 'dotenv';
 
-const supabase = createClient(
-  'https://odfgrwvrllfamevudjbm.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kZmdyd3ZybGxmYW1ldnVkamJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyMjg3MzMsImV4cCI6MjA3NjgwNDczM30.GuWyElz-E4bSAhHAwfvfLBeih1Ni5dZ49sFk3qZLA_0'
-);
+// Load environment variables
+dotenv.config();
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn('Warning: Supabase credentials not found in environment variables. Leaderboard will be disabled.');
+}
+
+const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 export async function submitScore(gameId: 'brick_breaker' | 'snake', playerName: string, score: number): Promise<boolean> {
   try {
+    if (!supabase) {
+      console.error('Leaderboard is disabled: Supabase credentials not configured');
+      return false;
+    }
+
     // Only submit scores that are multiples of 10 (valid game scores)
     if (score % 10 !== 0) {
       console.error('Invalid score - must be multiple of 10');

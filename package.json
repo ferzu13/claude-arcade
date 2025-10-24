@@ -30,6 +30,7 @@
   "type": "commonjs",
   "dependencies": {
     "@supabase/supabase-js": "^2.76.1",
+    "dotenv": "^16.4.5",
     "node-pty": "^1.0.0"
   },
   "devDependencies": {
