@@ -8,14 +8,14 @@ process.on('warning', (warning) => {
 });
 
 import * as pty from 'node-pty';
-import { SnakeGame } from './games/snake';
+import { BrickBreakerGame } from './games/brick-breaker';
 import { submitScore, promptForName } from './leaderboard';
 
-class SnakeGameWrapper {
+class BrickBreakerGameWrapper {
   private inGameMode = false;
   private ptyProcess: any = null;
   private gameLoop: NodeJS.Timeout | null = null;
-  private game = new SnakeGame();
+  private game = new BrickBreakerGame();
   private awaitingLeaderboardInput = false;
 
   start() {
@@ -86,7 +86,7 @@ class SnakeGameWrapper {
   startGame() {
     this.game.start();
     if (this.gameLoop) clearInterval(this.gameLoop);
-    this.gameLoop = setInterval(() => this.update(), 150);
+    this.gameLoop = setInterval(() => this.update(), 100);
   }
 
   stopGame() {
@@ -105,7 +105,7 @@ class SnakeGameWrapper {
       
       if (action === 'submit' && name) {
         process.stdout.write('\x1b[2J\x1b[10;1H\x1b[33mSubmitting score...\x1b[0m\n');
-        const success = await submitScore('snake', name, this.game.getScore());
+        const success = await submitScore('brick_breaker', name, this.game.getScore());
         
         if (success) {
           process.stdout.write('\x1b[32m✓ Score submitted successfully!\x1b[0m\n\n');
@@ -122,10 +122,10 @@ class SnakeGameWrapper {
   }
 
   update() {
-    this.game.update();
+    const result = this.game.update();
     
-    if (this.game.isGameOver()) {
-      this.handleGameOver(this.game.drawGameOver());
+    if (result.won !== undefined || result.lost !== undefined) {
+      this.handleGameOver(this.game.drawGameOver(result.won || false));
       return;
     }
 
@@ -151,32 +151,20 @@ class SnakeGameWrapper {
       return;
     }
 
-    if (this.game.isPlaying() && !this.game.isGameOver()) {
-      if (char === 'w' || char === 'W') {
-        this.game.setDirection(0, -1);
-      } else if (char === 's' || char === 'S') {
-        this.game.setDirection(0, 1);
-      } else if (char === 'a' || char === 'A') {
-        this.game.setDirection(-1, 0);
-      } else if (char === 'd' || char === 'D') {
-        this.game.setDirection(1, 0);
+    if (this.game.isPlaying()) {
+      if (key[0] === 27 && key[1] === 91 && key[2] === 68 || char === 'a' || char === 'A') {
+        this.game.movePaddleLeft();
+        process.stdout.write(this.game.draw());
       }
-      else if (key[0] === 27 && key[1] === 91) {
-        if (key[2] === 65) {
-          this.game.setDirection(0, -1);
-        } else if (key[2] === 66) {
-          this.game.setDirection(0, 1);
-        } else if (key[2] === 68) {
-          this.game.setDirection(-1, 0);
-        } else if (key[2] === 67) {
-          this.game.setDirection(1, 0);
-        }
+      else if (key[0] === 27 && key[1] === 91 && key[2] === 67 || char === 'd' || char === 'D') {
+        this.game.movePaddleRight();
+        process.stdout.write(this.game.draw());
       }
     }
   }
 }
 
-const wrapper = new SnakeGameWrapper();
+const wrapper = new BrickBreakerGameWrapper();
 wrapper.start();
 
 process.on('SIGINT', () => {
@@ -208,3 +196,4 @@ process.on('uncaughtException', (err) => {
   console.error('Uncaught exception:', err);
   process.exit(1);
 });
+
