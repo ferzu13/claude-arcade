@@ -1,6 +1,6 @@
 {
   "name": "claude-arcade",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Add classic arcade games to your Claude Code workflow with Ctrl+G",
   "main": "dist/index.js",
   "bin": {
@@ -11,6 +11,7 @@
     "start": "NODE_OPTIONS='--no-deprecation' ts-node src/index.ts",
     "dev:claude": "NODE_OPTIONS='--no-deprecation' ts-node src/brick-breaker-game.ts",
     "dev:snake": "NODE_OPTIONS='--no-deprecation' ts-node src/snake-game.ts",
+    "dev:dino": "NODE_OPTIONS='--no-deprecation' ts-node src/dino-game.ts",
     "space-invaders": "NODE_OPTIONS='--no-deprecation' ts-node src/space-invaders.ts"
   },
   "files": [
@@ -22,6 +23,8 @@
     "game",
     "breakout",
     "snake",
+    "dino",
+    "dinosaur",
     "terminal",
     "arcade"
   ],
@@ -30,6 +33,7 @@
   "type": "commonjs",
   "dependencies": {
     "@supabase/supabase-js": "^2.76.1",
+    "claude-arcade": "^1.0.6",
     "dotenv": "^16.4.5",
     "node-pty": "^1.0.0"
   },

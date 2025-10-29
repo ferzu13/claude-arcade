@@ -10,14 +10,16 @@ process.on('warning', (warning) => {
 import * as pty from 'node-pty';
 import { BrickBreakerGame } from './games/brick-breaker';
 import { SnakeGame } from './games/snake';
+import { DinoGame } from './games/dino';
 import { submitScore, promptForName } from './leaderboard';
 
 // ===== CLI ARGUMENT PARSING =====
 
-function parseArgs(): { help: boolean; snake: boolean; claudeArgs: string[] } {
+function parseArgs(): { help: boolean; snake: boolean; dino: boolean; claudeArgs: string[] } {
   const args = process.argv.slice(2);
   let help = false;
   let snake = false;
+  let dino = false;
   const claudeArgs: string[] = [];
 
   for (const arg of args) {
@@ -27,12 +29,14 @@ function parseArgs(): { help: boolean; snake: boolean; claudeArgs: string[] } {
       help = true;
     } else if (cleanArg === 'snake') {
       snake = true;
+    } else if (cleanArg === 'dino' || cleanArg === 'dinosaur') {
+      dino = true;
     } else {
       claudeArgs.push(arg);
     }
   }
 
-  return { help, snake, claudeArgs };
+  return { help, snake, dino, claudeArgs };
 }
 
 function showHelp() {
@@ -44,6 +48,7 @@ ${CYAN}Claude Arcade${RESET} - Add games to your Claude Code workflow!
 ${GREEN}Usage:${RESET}
   claude-arc           Start Claude with Brick Breaker game
   claude-arc -snake    Start Claude with Snake game
+  claude-arc -dino     Start Claude with Dino game
   claude-arc -help     Show this help
 
 ${GREEN}Controls:${RESET}
@@ -53,10 +58,12 @@ ${GREEN}Controls:${RESET}
 ${GREEN}Games:${RESET}
   ${YELLOW}•${RESET} Brick Breaker - Break bricks with strength levels (default)
   ${YELLOW}•${RESET} Snake         - Classic snake game
+  ${YELLOW}•${RESET} Dino          - Chrome dinosaur runner game
 
 ${GREEN}Examples:${RESET}
   claude-arc                    # Start with Brick Breaker
   claude-arc -snake             # Start with Snake
+  claude-arc -dino              # Start with Dino
   claude-arc --snake            # Also works with double dash
   claude-arc -snake --model gpt # Pass args to Claude
 
@@ -68,17 +75,17 @@ ${GREEN}More info:${RESET}
 
 // ===== GAME WRAPPER BASE CLASS =====
 
-class GameWrapper<T extends BrickBreakerGame | SnakeGame> {
+class GameWrapper<T extends BrickBreakerGame | SnakeGame | DinoGame> {
   protected inGameMode = false;
   protected ptyProcess: any = null;
   protected gameLoop: NodeJS.Timeout | null = null;
   protected outputBuffer: string[] = [];
   protected game: T;
   protected updateInterval: number;
-  protected gameId: 'brick_breaker' | 'snake';
+  protected gameId: 'brick_breaker' | 'snake' | 'dino';
   protected awaitingLeaderboardInput = false;
 
-  constructor(game: T, updateInterval: number = 100, gameId: 'brick_breaker' | 'snake') {
+  constructor(game: T, updateInterval: number = 100, gameId: 'brick_breaker' | 'snake' | 'dino') {
     this.game = game;
     this.updateInterval = updateInterval;
     this.gameId = gameId;
@@ -319,15 +326,60 @@ class SnakeWrapper extends GameWrapper<SnakeGame> {
   }
 }
 
+// ===== DINO WRAPPER =====
+
+class DinoWrapper extends GameWrapper<DinoGame> {
+  constructor() {
+    super(new DinoGame(), 50, 'dino'); // 50ms for smoother animation
+  }
+
+  update() {
+    this.game.update();
+    
+    if (this.game.isGameOver()) {
+      this.handleGameOver(this.game.drawGameOver());
+      return;
+    }
+
+    process.stdout.write(this.game.draw());
+  }
+
+  handleSpecificGameInput(key: Buffer) {
+    if (!this.game.isPlaying() || this.game.isGameOver()) return;
+
+    const char = key.toString();
+    
+    // Jump on up arrow or space
+    if (key[0] === 27 && key[1] === 91 && key[2] === 65) { // Up arrow
+      this.game.jump();
+    } else if (key[0] === 32) { // Space
+      this.game.jump();
+    }
+    // Duck on down arrow or S
+    else if (key[0] === 27 && key[1] === 91 && key[2] === 66) { // Down arrow
+      this.game.duck(true);
+    } else if (char === 's' || char === 'S') {
+      this.game.duck(true);
+    }
+  }
+}
+
 // ===== STARTUP =====
 
-const { help, snake, claudeArgs } = parseArgs();
+const { help, snake, dino, claudeArgs } = parseArgs();
 
 if (help) {
   showHelp();
 }
 
-const wrapper = snake ? new SnakeWrapper() : new BrickBreakerWrapper();
+let wrapper: BrickBreakerWrapper | SnakeWrapper | DinoWrapper;
+if (dino) {
+  wrapper = new DinoWrapper();
+} else if (snake) {
+  wrapper = new SnakeWrapper();
+} else {
+  wrapper = new BrickBreakerWrapper();
+}
 wrapper.start(claudeArgs);
 
 // ===== SIGNAL HANDLING =====

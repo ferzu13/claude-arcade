@@ -37,12 +37,16 @@ claude-arc
 # Start Claude with Snake
 claude-arc -snake
 
+# Start Claude with Dino
+claude-arc -dino
+
 # See all options
 claude-arc --help
 
 # Pass arguments to Claude
 claude-arc --model gpt
 claude-arc -snake --model gpt
+claude-arc -dino --model gpt
 ```
 
 ## 🕹️ Controls
@@ -63,6 +67,10 @@ claude-arc -snake --model gpt
 - `S` / `↓` - Move down
 - `D` / `→` - Move right
 
+**Dino:**
+- `↑` / `Space` - Jump
+- `↓` / `S` - Duck
+
 ## 🎲 Games
 
 ### Brick Breaker
@@ -76,6 +84,13 @@ Classic snake game:
 - Eat food to grow longer
 - Avoid walls and yourself
 - Compete for the highest score!
+
+### Dino
+Chrome's classic dinosaur runner game:
+- 🦖 Jump over cacti and duck under birds
+- Scrolling landscape with increasing difficulty
+- Score increases as you survive longer
+- Speed increases every 100 points!
 
 ## 🏆 Leaderboard
 
@@ -101,6 +116,7 @@ npm run build
 # Test locally (runs games standalone, without Claude wrapper)
 npm run dev:claude   # Brick Breaker
 npm run dev:snake    # Snake
+npm run dev:dino     # Dino
 ```
 
 ### Environment Variables

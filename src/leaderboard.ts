@@ -15,22 +15,31 @@ const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
-export async function submitScore(gameId: 'brick_breaker' | 'snake', playerName: string, score: number): Promise<boolean> {
+export async function submitScore(gameId: 'brick_breaker' | 'snake' | 'dino', playerName: string, score: number): Promise<boolean> {
   try {
     if (!supabase) {
       console.error('Leaderboard is disabled: Supabase credentials not configured');
       return false;
     }
 
-    // Only submit scores that are multiples of 10 (valid game scores)
-    if (score % 10 !== 0) {
+    // For dino game, score can be any number. For others, must be multiple of 10
+    if (gameId !== 'dino' && score % 10 !== 0) {
       console.error('Invalid score - must be multiple of 10');
       return false;
     }
 
     const snakeUUID = 'b14aedec-82a6-4538-aeae-9875460ba3b9'
     const brickBreakerUUID = '5b20731d-56d1-4cd7-b008-ddd84b2ca797'
-    const gameUUID = gameId === 'snake' ? snakeUUID : brickBreakerUUID;
+    const dinoUUID = 'c8f3d9a1-7b2e-4f5c-9d6a-1e4b8c9f2a3d'
+    
+    let gameUUID: string;
+    if (gameId === 'snake') {
+      gameUUID = snakeUUID;
+    } else if (gameId === 'brick_breaker') {
+      gameUUID = brickBreakerUUID;
+    } else {
+      gameUUID = dinoUUID;
+    }
 
     const { error } = await supabase
     .from('leaderboard')
